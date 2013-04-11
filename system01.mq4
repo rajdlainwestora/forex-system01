@@ -6,5 +6,11 @@ int deinit() {return(0);}
 int prevbar = 1; //domyslny numer swieczki poprzedniej
 int start() { //funkcja glowna
    if (Bars != prevbar) { //jesli obecna swieczka ma inny numer od poprzedniej
+       Print(„nowa swieczka!”);
+       prevbar = Bars;
    }
+   Comment(
+       „Aktualna swieczka: „+Bars+”\n”
+       ,”Poprzednia swieczka: „+prevbar+”\n”
+   );
 }
