@@ -12,8 +12,14 @@ int start() { //funkcja glowna
       if ((Ask+padding*Point) < High[1]) {
          Print(„Moze zlozyc zlecenie buystop na poziomie maksimum poprzedniej swieczki”);
       }
+      else {
+         Print("Nie zlozyl zlecenia buystop bo maksimum poprzedniej swieczki jest zbyt blisko");
+      }
       if ((Bid-padding*Point) > Low[1]) {
          Print(„Moze zlozyc zlecenie sellstop na poziomie minimum poprzedniej swieczki”);
+      }
+      else {
+         Print("Nie zlozyl zlecenia sellstop bo minimum poprzedniej swieczki jest zbyt blisko");
       }
    }
    Comment(
