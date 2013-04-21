@@ -7,8 +7,8 @@ int prevbar = 1; //domyslny numer swieczki poprzedniej
 extern int padding = 60; //odleglosc miedzy min/maks a miejscem w ktorym otworzy sie zlecenie
 int start() { //funkcja glowna
    if (Bars != prevbar) { //jesli obecna swieczka ma inny numer od poprzedniej
-       Print(„nowa swieczka!”);
-       prevbar = Bars;
+      Print(„nowa swieczka!”);
+      prevbar = Bars;
       if ((Ask+padding*Point) < High[1]) {
          Print(„Moze zlozyc zlecenie buystop na poziomie maksimum poprzedniej swieczki”);
       }
@@ -17,7 +17,7 @@ int start() { //funkcja glowna
       }
    }
    Comment(
-       „Aktualna swieczka: „+Bars+”\n”
-       ,”Poprzednia swieczka: „+prevbar+”\n”
+      „Aktualna swieczka: „+Bars+”\n”
+      ,”Poprzednia swieczka: „+prevbar+”\n”
    );
 }
