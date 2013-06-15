@@ -25,10 +25,10 @@ void prepareTransakction(string type, string msgSuccess, string msgError) {
       whileDelimiter = false;
    }
    else {
-      Print(msgError);
+      Print(msgError + " " + whileIndex + " swieczki od końca jest zbyt blisko");
       if (whileIndex >= 10) {
          whileDelimiter = false;
-         Print("...");
+         Print("Nie sprawdzam już więcej świeczek w historii");
       }
    }
    whileIndex++;
@@ -42,12 +42,12 @@ int start() { //funkcja glowna
       prepareTransakction(
          "buystop",
          "Moze zlozyc zlecenie buystop na poziomie maksimum poprzedniej swieczki",
-         "Nie zlozyl zlecenia buystop bo maksimum poprzedniej swieczki jest zbyt blisko"
+         "Nie zlozyl zlecenia buystop bo maksimum"
       );
       prepareTransakction(
          "sellstop",
          "Moze zlozyc zlecenie sellstop na poziomie minimum poprzedniej swieczki",
-         "Nie zlozyl zlecenia sellstop bo minimum poprzedniej swieczki jest zbyt blisko"
+         "Nie zlozyl zlecenia sellstop bo minimum"
       );
    }
    Comment(
