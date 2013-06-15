@@ -10,28 +10,28 @@ void prepareTransakction(string type, string msgSuccess, string msgError) {
    bool whileDelimiter = true;
    int whileIndex = 1;
    while(whileDelimiter) {
-   bool condidion;
-   if (type == "buystop") {
-      if ((Ask+padding*Point) < High[whileIndex]) condidion = true;
-      else condidion = false;
-   }
-   else if (type == "sellstop") {
-      if ((Bid-padding*Point) > Low[whileIndex]) condidion = true;
-      else condidion = false;
-   }
-   Print(type);
-   if (condidion) {
-      Print(msgSuccess);
-      whileDelimiter = false;
-   }
-   else {
-      Print(msgError + " " + whileIndex + " swieczki od końca jest zbyt blisko");
-      if (whileIndex >= 10) {
-         whileDelimiter = false;
-         Print("Nie sprawdzam już więcej świeczek w historii");
+      bool condidion;
+      if (type == "buystop") {
+         if ((Ask+padding*Point) < High[whileIndex]) condidion = true;
+         else condidion = false;
       }
-   }
-   whileIndex++;
+      else if (type == "sellstop") {
+         if ((Bid-padding*Point) > Low[whileIndex]) condidion = true;
+         else condidion = false;
+      }
+      Print(type);
+      if (condidion) {
+         Print(msgSuccess);
+         whileDelimiter = false;
+      }
+      else {
+         Print(msgError + " " + whileIndex + " swieczki od końca jest zbyt blisko");
+         if (whileIndex >= 10) {
+            whileDelimiter = false;
+            Print("Nie sprawdzam już więcej świeczek w historii");
+         }
+      }
+      whileIndex++;
    }
 }
 
