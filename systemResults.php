@@ -36,6 +36,32 @@ if ($_POST) {
 	$data = $_POST['data'];
 }
 
+function seriesLoss($series) {
+	if ($series['loss']['prev']) { //prev is loss and now is loss
+		$series['loss']['val']++;
+	}
+	else {
+		$series['loss']['val'] = 0;
+	}
+	if ($series['loss']['val'] > $series['loss']['biggest']) {
+		$series['loss']['biggest'] = $series['loss']['val'];
+	}
+	return $series;
+}
+
+function seriesProfit($series) {
+	if ($series['profit']['prev']) { //prev is profit and now is profit
+		$series['profit']['val']++;
+	}
+	else {
+		$series['profit']['val'] = 0;
+	}
+	if ($series['profit']['val'] > $series['profit']['biggest']) {
+		$series['profit']['biggest'] = $series['profit']['val'];
+	}
+	return $series;
+}
+
 function formatData($data, $type) {
 	$lines = explode("\n", $data);
 	$formattedData = '';
@@ -51,12 +77,12 @@ function formatData($data, $type) {
 	$transaction['avgProfit'] = 0;
 	$minMax['min'] = 0;
 	$minMax['max'] = 0;
-	$prevTransactionLoss = false;
-	$prevTransactionProfit = false;
-	$seriesLoss = 0;
-	$seriesProfit = 0;
-	$biggestSeriesLoss = 0;
-	$biggestSeriesProfit = 0;
+	$series['loss']['prev'] = false;
+	$series['loss']['val'] = 0;
+	$series['loss']['biggest'] = 0;
+	$series['profit']['prev'] = false;
+	$series['profit']['val'] = 0;
+	$series['profit']['biggest'] = 0;
 	$weeklySummary = array();
 	foreach($lines as $e) {
 		$el = explode(" ", $e);
@@ -71,34 +97,18 @@ function formatData($data, $type) {
 				$weeklySummary[intVal($el[1])][1] + $el[2]
 			);
 			if (intVal($el[2]) < 0) {
-				if ($prevTransactionLoss) { //prev is loss and now is loss
-					$seriesLoss++;
-				}
-				else {
-					$seriesLoss = 0;
-				}
-				if ($seriesLoss > $biggestSeriesLoss) {
-					$biggestSeriesLoss = $seriesLoss;
-				}
+				$series = seriesLoss($series);
 				$transaction['loss']++;
 				$transaction['sumLoss'] += intVal($el[2]);
-				$prevTransactionLoss = true;
-				$prevTransactionProfit = false;
+				$series['loss']['prev'] = true;
+				$series['profit']['prev'] = false;
 			}
 			else {
-				if ($prevTransactionProfit) { //prev is profit and now is profit
-					$seriesProfit++;
-				}
-				else {
-					$seriesProfit = 0;
-				}
-				if ($seriesProfit > $biggestSeriesProfit) {
-					$biggestSeriesProfit = $seriesProfit;
-				}
+				$series = seriesProfit($series);
 				$transaction['profit']++;
 				$transaction['sumProfit'] += intVal($el[2]);
-				$prevTransactionLoss = false;
-				$prevTransactionProfit = true;
+				$series['loss']['prev'] = false;
+				$series['profit']['prev'] = true;
 			}
 			if (intVal($el[2]) < $minMax['min']) {
 				$minMax['min'] = intVal($el[2]);
@@ -157,9 +167,9 @@ function formatData($data, $type) {
 		<br />
 		Drowdown (obsunięcie): ".$drowDown."
 		<br />
-		Najdłuższa seria stratnych transakcji: ".$biggestSeriesLoss."
+		Najdłuższa seria stratnych transakcji: ".$series['loss']['biggest']."
 		<br />
-		Najdłuższa seria zyskownych transakcji: ".$biggestSeriesProfit."
+		Najdłuższa seria zyskownych transakcji: ".$series['profit']['biggest']."
 	";
 	return array(
 		$formattedData,
