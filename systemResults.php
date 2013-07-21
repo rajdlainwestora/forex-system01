@@ -41,6 +41,8 @@ function seriesLoss($series) {
 		$series['loss']['val']++;
 	}
 	else {
+		$series['loss']['average']['array'][$series['loss']['average']['index']] = $series['loss']['val'];
+		$series['loss']['average']['index']++;
 		$series['loss']['val'] = 0;
 	}
 	if ($series['loss']['val'] > $series['loss']['biggest']) {
@@ -54,6 +56,8 @@ function seriesProfit($series) {
 		$series['profit']['val']++;
 	}
 	else {
+		$series['profit']['average']['array'][$series['profit']['average']['index']] = $series['profit']['val'];
+		$series['profit']['average']['index']++;
 		$series['profit']['val'] = 0;
 	}
 	if ($series['profit']['val'] > $series['profit']['biggest']) {
@@ -93,12 +97,18 @@ function formatData($inputData, $type) {
 	$data['transaction']['sumProfit'] = 0;
 	$data['transaction']['avgLoss'] = 0;
 	$data['transaction']['avgProfit'] = 0;
-	$data['series']['loss']['prev'] = false;
-	$data['series']['loss']['val'] = 0;
-	$data['series']['loss']['biggest'] = 0;
-	$data['series']['profit']['prev'] = false;
-	$data['series']['profit']['val'] = 0;
-	$data['series']['profit']['biggest'] = 0;
+	$data['series']['loss']['prev'] = false; //poprzednia strata w serii
+	$data['series']['loss']['val'] = 0; //wartosc straty w serii
+	$data['series']['loss']['biggest'] = 0; //najwieksza strata w serii
+	$data['series']['profit']['prev'] = false; //poprzedni zysk w serii
+	$data['series']['profit']['val'] = 0; //wartosc zysku w serii
+	$data['series']['profit']['biggest'] = 0; //najwiekszy zysk w serii
+	$data['series']['loss']['average']['index'] = 0; //index tablicy sredniej dlugosci serii strat
+	$data['series']['loss']['average']['array'] = array(); //tablica sredniej dlugosci serii strat
+	$data['series']['loss']['average']['val'] = 0; //wartosc sredniej dlugosci serii strat
+	$data['series']['profit']['average']['index'] = 0; //index tablicy sredniej dlugosci serii zyskow
+	$data['series']['profit']['average']['array'] = array(); //tablica sredniej dlugosci serii zyskow
+	$data['series']['profit']['average']['val'] = 0; //wartosc sredniej dlugosci serii zyskow
 	$minMax['min'] = 0;
 	$minMax['max'] = 0;
 	$weeklySummary = array();
@@ -135,11 +145,11 @@ function formatData($inputData, $type) {
 	$data['transaction']['profitPercent'] = intVal($data['transaction']['profit'] / $data['transaction']['all'] * 100);
 	$data['transaction']['avgLoss'] = intVal($data['transaction']['sumLoss'] / $data['transaction']['loss']);
 	$data['transaction']['avgProfit'] = intVal($data['transaction']['sumProfit'] / $data['transaction']['profit']);
-	$drowDown = $cumulatedMax + abs($cumulatedMin);
+	$drawDown = $cumulatedMax + abs($cumulatedMin);
+	$data['series']['loss']['average']['val'] = round(array_sum($data['series']['loss']['average']['array']) / count($data['series']['loss']['average']['array']));
+	$data['series']['profit']['average']['val'] = round(array_sum($data['series']['profit']['average']['array']) / count($data['series']['profit']['average']['array']));
 	/*
 	TODO:
-	średnia seria stratnych transakcji
-	średnia seria stratnych transakcji
 	najdłuższa seria stratnych tygodnii
 	średnia seria stratnych tygodnii
 	najdłuższa seria zyskownych tygodni
@@ -170,11 +180,15 @@ function formatData($inputData, $type) {
 		<br />
 		Historyczne minimum: ".$cumulatedMin."
 		<br />
-		Drowdown (obsunięcie): ".$drowDown."
+		Drawdown (obsunięcie): ".$drawDown."
 		<br />
 		Najdłuższa seria stratnych transakcji: ".$data['series']['loss']['biggest']."
 		<br />
 		Najdłuższa seria zyskownych transakcji: ".$data['series']['profit']['biggest']."
+		<br />
+		Średnia seria stratnych transakcji: ".$data['series']['loss']['average']['val']."
+		<br />
+		Średnia seria zyskownych transakcji: ".$data['series']['profit']['average']['val']."
 	";
 	return array(
 		$formattedData,
