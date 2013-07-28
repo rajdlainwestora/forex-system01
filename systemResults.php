@@ -122,16 +122,16 @@ function formatData($inputData, $type) {
 			$data['transaction']['all']++;
 			$weeklySummary[intVal($el[1])] = array(
 				intVal($el[0]),
-				$weeklySummary[intVal($el[1])][1] + $el[2]
+				$weeklySummary[intVal($el[1])][1] + $el[3]
 			);
-			$data = calculateData(intVal($el[2]), $data);
-			if (intVal($el[2]) < $minMax['min']) {
-				$minMax['min'] = intVal($el[2]);
+			$data = calculateData(intVal($el[3]), $data);
+			if (intVal($el[3]) < $minMax['min']) {
+				$minMax['min'] = intVal($el[3]);
 			}
-			if (intVal($el[2]) > $minMax['max']) {
-				$minMax['max'] = intVal($el[2]);
+			if (intVal($el[3]) > $minMax['max']) {
+				$minMax['max'] = intVal($el[3]);
 			}
-			$cumulatedValue += intVal($el[2]);
+			$cumulatedValue += intVal($el[3]);
 			if ($cumulatedValue < $cumulatedMin) {
 				$cumulatedMin = $cumulatedValue;
 			}
@@ -190,19 +190,20 @@ function formatData($inputData, $type) {
 		<br />
 		Średnia seria zyskownych transakcji: ".$data['series']['profit']['average']['val']."
 	";
+	$htmlCode = '<div id="chart_div_'.$type.'" style="width: 600px; height: 600px; border: 2px solid black;"></div><br />';
 	return array(
 		$formattedData,
 		$data['transaction'],
 		$minMax,
 		$cumulatedValue,
-		'<br />'.$description.'<br />',
+		$htmlCode.$description.'<br /><br />',
 		parseWeeklySummary($weeklySummary)
 	);
 }
 
-$output1 = formatData($data, 1);
-$output2 = formatData($data, 2);
-$output3 = formatData($data, 3);
+$output1 = formatData($data, 1); //DEMO + REAL
+//$output2 = formatData($data, 2); //DEMO
+//$output3 = formatData($data, 3); //REAL
 
 ?>
 <html>
@@ -224,39 +225,27 @@ $output3 = formatData($data, 3);
 		}
 		google.load("visualization", "1", {packages:["corechart"]});
 		google.setOnLoadCallback(function() {
-			drawChart(
+			drawChart( //DEMO + REAL
 				'System EURUSD (DEMO + REAL)',
 				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output1[0] ?>],
 				'chart_div_1'
-			);
-			drawChart(
+			);/*
+			drawChart( //DEMO
 				'System EURUSD (DEMO)',
 				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output2[0] ?>],
 				'chart_div_2'
 			);
-			drawChart(
+			drawChart( //REAL
 				'System EURUSD (REAL)',
 				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output3[0] ?>],
 				'chart_div_3'
-			);
+			);*/
 		});
 	</script>
 </head>
 <body>
-	<div id="chart_div_1" style="width: 600px; height: 600px; border: 2px solid black;"></div>
-	<?php echo $output1[4] ?>
-	<br />
-	<?php echo $output1[5] ?>
-	<br />
-	<div id="chart_div_2" style="width: 600px; height: 600px; border: 2px solid black;"></div>
-	<?php echo $output2[4] ?>
-	<br />
-	<?php echo $output2[5] ?>
-	<br />
-	<div id="chart_div_3" style="width: 600px; height: 600px; border: 2px solid black;"></div>
-	<?php echo $output3[4] ?>
-	<br />
-	<?php echo $output3[5] ?>
-	<br />
+	<?= $output1[4].$output1[5] ?>
+	<?= $output2[4].$output2[5] ?>
+	<?= $output3[4].$output3[5] ?>
 </body>
 </html>
