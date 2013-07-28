@@ -27,7 +27,7 @@ function parseWeeklySummary($data) {
 		$weekType = ($week[0] == 2) ? 'REAL' : 'DEMO';
 		$return = $return.'['.$weekType.'] '.$i.' '.$messages['periodName'].' '.$week[1].'<br />';
 	}
-	return $return;
+	return $return.'<br />';
 }
 
 include('data.php');
@@ -84,12 +84,85 @@ function calculateData($value, $data) {
 	return $data;
 }
 
+function prepareDescription($descData) {
+	return "
+		Wszystkich transakcji: ".$descData['transaction']['all']."
+		<br />
+		Wynik po wszystkich transakcjach: ".$descData['cumulated']['Value']."
+		<br />
+		Transakcje zyskowne: ".$descData['transaction']['profit']." (".$descData['transaction']['profitPercent']."%)
+		<br />
+		Transakcje stratne: ".$descData['transaction']['loss']." (".$descData['transaction']['lossPercent']."%)
+		<br />
+		Suma zarobionych pipsów: ".$descData['transaction']['sumProfit']."
+		<br />
+		Suma straconych pipsów: ".$descData['transaction']['sumLoss']."
+		<br />
+		Średnia wartość zyskownej transakcji: ".$descData['transaction']['avgProfit']."
+		<br />
+		Średnia wartość stratnej transakcji: ".$descData['transaction']['avgLoss']."
+		<br />
+		Największa zyskowna transakcja: ".$descData['minMax']['max']."
+		<br />
+		Największa stratna transakcja: ".$descData['minMax']['min']."
+		<br />
+		Historyczne maksimum: ".$descData['cumulated']['Max']."
+		<br />
+		Historyczne minimum: ".$descData['cumulated']['Min']."
+		<br />
+		Drawdown (obsunięcie): ".$descData['transaction']['drawDown']."
+		<br />
+		Najdłuższa seria stratnych transakcji: ".$descData['series']['loss']['biggest']."
+		<br />
+		Najdłuższa seria zyskownych transakcji: ".$descData['series']['profit']['biggest']."
+		<br />
+		Średnia seria stratnych transakcji: ".$descData['series']['loss']['average']['val']."
+		<br />
+		Średnia seria zyskownych transakcji: ".$descData['series']['profit']['average']['val']."<br /><br />
+	";
+}
+
+function prepareJs($type, $formattedData) {
+	//TODO: refactor me, extract messages etc.
+	$jsCode = "";
+	if ($type == 1) {
+		$jsCode = "<script type=\"text/javascript\">
+			google.setOnLoadCallback(function() {
+				drawChart( //DEMO + REAL
+					'System EURUSD (DEMO + REAL)',
+					[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], ".$formattedData."],
+					'chart_div_1'
+				);
+			});
+		</script>";
+	}
+	elseif ($type == 2) {
+		$jsCode = "<script type=\"text/javascript\">
+			google.setOnLoadCallback(function() {
+				drawChart( //DEMO
+					'System EURUSD (DEMO)',
+					[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], ".$formattedData."],
+					'chart_div_2'
+				);
+			});
+		</script>";
+	}
+	elseif ($type == 3) {
+		$jsCode = "<script type=\"text/javascript\">
+			google.setOnLoadCallback(function() {
+				drawChart( //REAL
+					'System EURUSD (REAL)',
+					[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], ".$formattedData."],
+					'chart_div_3'
+				);
+			});
+		</script>";
+	}
+	return $jsCode;
+}
+
 function formatData($inputData, $type) {
 	$lines = explode("\n", $inputData);
-	$formattedData = '';
-	$cumulatedValue = 0;
-	$cumulatedMin = 0;
-	$cumulatedMax = 0;
 	$data['transaction']['all'] = 0;
 	$data['transaction']['loss'] = 0;
 	$data['transaction']['profit'] = 0;
@@ -97,6 +170,12 @@ function formatData($inputData, $type) {
 	$data['transaction']['sumProfit'] = 0;
 	$data['transaction']['avgLoss'] = 0;
 	$data['transaction']['avgProfit'] = 0;
+	$data['transaction']['drawDown'] = 0;
+	$data['minMax']['min'] = 0;
+	$data['minMax']['max'] = 0;
+	$data['cumulated']['Value'] = 0;
+	$data['cumulated']['Min'] = 0;
+	$data['cumulated']['Max'] = 0;
 	$data['series']['loss']['prev'] = false; //poprzednia strata w serii
 	$data['series']['loss']['val'] = 0; //wartosc straty w serii
 	$data['series']['loss']['biggest'] = 0; //najwieksza strata w serii
@@ -109,8 +188,7 @@ function formatData($inputData, $type) {
 	$data['series']['profit']['average']['index'] = 0; //index tablicy sredniej dlugosci serii zyskow
 	$data['series']['profit']['average']['array'] = array(); //tablica sredniej dlugosci serii zyskow
 	$data['series']['profit']['average']['val'] = 0; //wartosc sredniej dlugosci serii zyskow
-	$minMax['min'] = 0;
-	$minMax['max'] = 0;
+	$formattedData = '';
 	$weeklySummary = array();
 	foreach($lines as $e) {
 		$el = explode(" ", $e);
@@ -125,27 +203,27 @@ function formatData($inputData, $type) {
 				$weeklySummary[intVal($el[1])][1] + $el[3]
 			);
 			$data = calculateData(intVal($el[3]), $data);
-			if (intVal($el[3]) < $minMax['min']) {
-				$minMax['min'] = intVal($el[3]);
+			if (intVal($el[3]) < $data['minMax']['min']) {
+				$data['minMax']['min'] = intVal($el[3]);
 			}
-			if (intVal($el[3]) > $minMax['max']) {
-				$minMax['max'] = intVal($el[3]);
+			if (intVal($el[3]) > $data['minMax']['max']) {
+				$data['minMax']['max'] = intVal($el[3]);
 			}
-			$cumulatedValue += intVal($el[3]);
-			if ($cumulatedValue < $cumulatedMin) {
-				$cumulatedMin = $cumulatedValue;
+			$data['cumulated']['Value'] += intVal($el[3]);
+			if ($data['cumulated']['Value'] < $data['cumulated']['Min']) {
+				$data['cumulated']['Min'] = $data['cumulated']['Value'];
 			}
-			if ($cumulatedValue > $cumulatedMax) {
-				$cumulatedMax = $cumulatedValue;
+			if ($data['cumulated']['Value'] > $data['cumulated']['Max']) {
+				$data['cumulated']['Max'] = $data['cumulated']['Value'];
 			}
-			$formattedData = $formattedData."['".$el[1]."', ".$cumulatedValue."],";
+			$formattedData = $formattedData."['".$el[1]."', ".$data['cumulated']['Value']."],";
 		}
 	}
 	$data['transaction']['lossPercent'] = intVal($data['transaction']['loss'] / $data['transaction']['all'] * 100);
 	$data['transaction']['profitPercent'] = intVal($data['transaction']['profit'] / $data['transaction']['all'] * 100);
 	$data['transaction']['avgLoss'] = intVal($data['transaction']['sumLoss'] / $data['transaction']['loss']);
 	$data['transaction']['avgProfit'] = intVal($data['transaction']['sumProfit'] / $data['transaction']['profit']);
-	$drawDown = $cumulatedMax + abs($cumulatedMin);
+	$data['transaction']['drawDown'] = $data['cumulated']['Max'] + abs($data['cumulated']['Min']);
 	$data['series']['loss']['average']['val'] = round(array_sum($data['series']['loss']['average']['array']) / count($data['series']['loss']['average']['array']));
 	$data['series']['profit']['average']['val'] = round(array_sum($data['series']['profit']['average']['array']) / count($data['series']['profit']['average']['array']));
 	/*
@@ -155,56 +233,9 @@ function formatData($inputData, $type) {
 	najdłuższa seria zyskownych tygodni
 	średnia seria stratnych tygodnii
 	*/
-	$description = "
-		Wszystkich transakcji: ".$data['transaction']['all']."
-		<br />
-		Wynik po wszystkich transakcjach: $cumulatedValue
-		<br />
-		Transakcje zyskowne: ".$data['transaction']['profit']." (".$data['transaction']['profitPercent']."%)
-		<br />
-		Transakcje stratne: ".$data['transaction']['loss']." (".$data['transaction']['lossPercent']."%)
-		<br />
-		Suma zarobionych pipsów: ".$data['transaction']['sumProfit']."
-		<br />
-		Suma straconych pipsów: ".$data['transaction']['sumLoss']."
-		<br />
-		Średnia wartość zyskownej transakcji: ".$data['transaction']['avgProfit']."
-		<br />
-		Średnia wartość stratnej transakcji: ".$data['transaction']['avgLoss']."
-		<br />
-		Największa zyskowna transakcja: ".$minMax['max']."
-		<br />
-		Największa stratna transakcja: ".$minMax['min']."
-		<br />
-		Historyczne maksimum: ".$cumulatedMax."
-		<br />
-		Historyczne minimum: ".$cumulatedMin."
-		<br />
-		Drawdown (obsunięcie): ".$drawDown."
-		<br />
-		Najdłuższa seria stratnych transakcji: ".$data['series']['loss']['biggest']."
-		<br />
-		Najdłuższa seria zyskownych transakcji: ".$data['series']['profit']['biggest']."
-		<br />
-		Średnia seria stratnych transakcji: ".$data['series']['loss']['average']['val']."
-		<br />
-		Średnia seria zyskownych transakcji: ".$data['series']['profit']['average']['val']."
-	";
 	$htmlCode = '<div id="chart_div_'.$type.'" style="width: 600px; height: 600px; border: 2px solid black;"></div><br />';
-	return array(
-		$formattedData,
-		$data['transaction'],
-		$minMax,
-		$cumulatedValue,
-		$htmlCode.$description.'<br /><br />',
-		parseWeeklySummary($weeklySummary)
-	);
+	return prepareJs($type, $formattedData).$htmlCode.prepareDescription($data).parseWeeklySummary($weeklySummary);
 }
-
-$output1 = formatData($data, 1); //DEMO + REAL
-//$output2 = formatData($data, 2); //DEMO
-//$output3 = formatData($data, 3); //REAL
-
 ?>
 <html>
 <head>
@@ -224,28 +255,13 @@ $output1 = formatData($data, 1); //DEMO + REAL
 			chart.draw(data, options);
 		}
 		google.load("visualization", "1", {packages:["corechart"]});
-		google.setOnLoadCallback(function() {
-			drawChart( //DEMO + REAL
-				'System EURUSD (DEMO + REAL)',
-				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output1[0] ?>],
-				'chart_div_1'
-			);/*
-			drawChart( //DEMO
-				'System EURUSD (DEMO)',
-				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output2[0] ?>],
-				'chart_div_2'
-			);
-			drawChart( //REAL
-				'System EURUSD (REAL)',
-				[['Tydzien', 'Skumulowany wynik w pipsach'], ['00', 0], <?php echo $output3[0] ?>],
-				'chart_div_3'
-			);*/
-		});
 	</script>
 </head>
 <body>
-	<?= $output1[4].$output1[5] ?>
-	<?= $output2[4].$output2[5] ?>
-	<?= $output3[4].$output3[5] ?>
+	<?php
+		echo formatData($data, 1); //DEMO + REAL
+		echo formatData($data, 2); //DEMO
+		echo formatData($data, 3); //REAL
+	?>
 </body>
 </html>
