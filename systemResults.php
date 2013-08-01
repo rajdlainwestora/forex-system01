@@ -28,7 +28,13 @@ function parseWeeklySummary($data) {
 	$return = $messages['reportTitle'].':<br />';
 	foreach($data as $i => $week) {
 		$weekType = ($week[0] == 2) ? 'REAL' : 'DEMO';
-		$return = $return.'['.$weekType.'] '.$i.' '.$messages['periodName'].' '.$week[1].'<br />';
+		$normalValue = $week[2] / $week[1];
+		if ($week[1] == 1) {
+			$return = $return.'['.$weekType.'] '.$i.' '.$messages['periodName'].' '.$week[2].'<br />';
+		}
+		else {
+			$return = $return.'['.$weekType.'] '.$i.' '.$messages['periodName'].' '.$normalValue.' * '.$week[1].' = '.$week[2].'<br />';
+		}
 	}
 	return $return.'<br />';
 }
@@ -179,19 +185,21 @@ function formatData($inputData, $messages, $type) {
 			|| ($type == 2 && $el[0] == 1)
 			|| ($type == 3 && $el[0] == 2)
 		) {
+			$result = intVal($el[2]) * intVal($el[3]);
 			$formatedData['transaction']['all']++;
 			$formatedData['weeklySummary'][intVal($el[1])] = array(
 				intVal($el[0]),
-				$formatedData['weeklySummary'][intVal($el[1])][1] + $el[3]
+				intVal($el[2]),
+				$formatedData['weeklySummary'][intVal($el[1])][2] + $result
 			);
-			$formatedData = calculateData(intVal($el[3]), $formatedData);
-			if (intVal($el[3]) < $formatedData['minMax']['min']) {
-				$formatedData['minMax']['min'] = intVal($el[3]);
+			$formatedData = calculateData(intVal($result), $formatedData);
+			if ($result < $formatedData['minMax']['min']) {
+				$formatedData['minMax']['min'] = $result;
 			}
-			if (intVal($el[3]) > $formatedData['minMax']['max']) {
-				$formatedData['minMax']['max'] = intVal($el[3]);
+			if ($result > $formatedData['minMax']['max']) {
+				$formatedData['minMax']['max'] = $result;
 			}
-			$formatedData['cumulated']['Value'] += intVal($el[3]);
+			$formatedData['cumulated']['Value'] += $result;
 			if ($formatedData['cumulated']['Value'] < $formatedData['cumulated']['Min']) {
 				$formatedData['cumulated']['Min'] = $formatedData['cumulated']['Value'];
 			}
