@@ -175,7 +175,23 @@ function prepareData() {
 	return $data;
 }
 
+function cutToWeek($inputData, $weekNumber) {
+	$returnArray = array();
+	$lines = explode("\n", $inputData);
+	foreach($lines as $e) {
+		$el = explode(" ", $e);
+		if ($el[1] <= $weekNumber) {
+			$returnArray[] = $e;
+		}
+	}
+	$returnString = implode("\n", $returnArray);
+	return $returnString;
+}
+
 function formatData($inputData, $messages, $type) {
+	if ($_GET['cutTo']) {
+		$inputData = cutToWeek($inputData, $_GET['cutTo']);
+	}
 	$formatedData = prepareData();
 	$lines = explode("\n", $inputData);
 	foreach($lines as $e) {
@@ -226,6 +242,18 @@ function formatData($inputData, $messages, $type) {
 	$htmlCode = '<div id="chart_div_'.$type.'" style="width: 600px; height: 600px; border: 2px solid black;"></div><br />';
 	return prepareJs($type, $formatedData['jsData'], $messages).$htmlCode.prepareDescription($formatedData).parseWeeklySummary($formatedData['weeklySummary']);
 }
+
+function weeklyReport($inputData, $weekNumber) {
+	echo $weekNumber.'<br />';
+	$lines = explode("\n", $inputData);
+	foreach($lines as $e) {
+		$el = explode(" ", $e);
+		if ($el[0] == $weekNumber) {
+			echo $el[1].' '.$el[2].' '.$el[3].' '.$el[4].' '.$el[5].' '.$el[6].' '.$el[7].' '.$el[8];
+			echo '<br />';
+		}
+	}
+}
 ?>
 <html>
 <head>
@@ -248,8 +276,21 @@ function formatData($inputData, $messages, $type) {
 	</script>
 </head>
 <body>
+
 	<?php for ($i = 1; $i <= 3; $i++) {
 		echo formatData($data, $messages, $i);
 	} ?>
+
+	<h1>Weekly report</h1>
+
+	<?php
+		weeklyReport($dataDetails, 27);
+		weeklyReport($dataDetails, 28);
+		weeklyReport($dataDetails, 29);
+		weeklyReport($dataDetails, 30);
+		weeklyReport($dataDetails, 31);
+		weeklyReport($dataDetails, 32);
+	?>
+
 </body>
 </html>
