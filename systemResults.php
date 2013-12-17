@@ -144,35 +144,35 @@ function prepareJs($type, $serializedArray, $messages) {
 }
 
 function prepareData() {
-	$data = array();
-	$data['transaction']['all'] = 0;
-	$data['transaction']['loss'] = 0;
-	$data['transaction']['profit'] = 0;
-	$data['transaction']['sumLoss'] = 0;
-	$data['transaction']['sumProfit'] = 0;
-	$data['transaction']['avgLoss'] = 0;
-	$data['transaction']['avgProfit'] = 0;
-	$data['transaction']['drawDown'] = 0;
-	$data['minMax']['min'] = 0;
-	$data['minMax']['max'] = 0;
-	$data['cumulated']['Value'] = 0;
-	$data['cumulated']['Min'] = 0;
-	$data['cumulated']['Max'] = 0;
-	$data['series']['loss']['prev'] = false; //poprzednia strata w serii
-	$data['series']['loss']['val'] = 0; //wartosc straty w serii
-	$data['series']['loss']['biggest'] = 0; //najwieksza strata w serii
-	$data['series']['profit']['prev'] = false; //poprzedni zysk w serii
-	$data['series']['profit']['val'] = 0; //wartosc zysku w serii
-	$data['series']['profit']['biggest'] = 0; //najwiekszy zysk w serii
-	$data['series']['loss']['average']['index'] = 0; //index tablicy sredniej dlugosci serii strat
-	$data['series']['loss']['average']['array'] = array(); //tablica sredniej dlugosci serii strat
-	$data['series']['loss']['average']['val'] = 0; //wartosc sredniej dlugosci serii strat
-	$data['series']['profit']['average']['index'] = 0; //index tablicy sredniej dlugosci serii zyskow
-	$data['series']['profit']['average']['array'] = array(); //tablica sredniej dlugosci serii zyskow
-	$data['series']['profit']['average']['val'] = 0; //wartosc sredniej dlugosci serii zyskow
-	$data['jsData'] = '';
-	$data['weeklySummary'] = array();
-	return $data;
+	$default = array();
+	$default['transaction']['all'] = 0;
+	$default['transaction']['loss'] = 0;
+	$default['transaction']['profit'] = 0;
+	$default['transaction']['sumLoss'] = 0;
+	$default['transaction']['sumProfit'] = 0;
+	$default['transaction']['avgLoss'] = 0;
+	$default['transaction']['avgProfit'] = 0;
+	$default['transaction']['drawDown'] = 0;
+	$default['minMax']['min'] = 0;
+	$default['minMax']['max'] = 0;
+	$default['cumulated']['Value'] = 0;
+	$default['cumulated']['Min'] = 0;
+	$default['cumulated']['Max'] = 0;
+	$default['series']['loss']['prev'] = false; //poprzednia strata w serii
+	$default['series']['loss']['val'] = 0; //wartosc straty w serii
+	$default['series']['loss']['biggest'] = 0; //najwieksza strata w serii
+	$default['series']['profit']['prev'] = false; //poprzedni zysk w serii
+	$default['series']['profit']['val'] = 0; //wartosc zysku w serii
+	$default['series']['profit']['biggest'] = 0; //najwiekszy zysk w serii
+	$default['series']['loss']['average']['index'] = 0; //index tablicy sredniej dlugosci serii strat
+	$default['series']['loss']['average']['array'] = array(); //tablica sredniej dlugosci serii strat
+	$default['series']['loss']['average']['val'] = 0; //wartosc sredniej dlugosci serii strat
+	$default['series']['profit']['average']['index'] = 0; //index tablicy sredniej dlugosci serii zyskow
+	$default['series']['profit']['average']['array'] = array(); //tablica sredniej dlugosci serii zyskow
+	$default['series']['profit']['average']['val'] = 0; //wartosc sredniej dlugosci serii zyskow
+	$default['jsData'] = '';
+	$default['weeklySummary'] = array();
+	return $default;
 }
 
 function cutToWeek($inputData, $weekNumber) {
@@ -186,6 +186,24 @@ function cutToWeek($inputData, $weekNumber) {
 	}
 	$returnString = implode("\n", $returnArray);
 	return $returnString;
+}
+
+function processRawData($data) {
+	$lines = explode("\n", $data['raw']);
+	$linesReversed = array_reverse($lines);
+	$newInputData = "";
+	$newDataDetails = "";
+	foreach($linesReversed as $e) {
+		$el = explode("	", $e);
+		$newDataDetails .= "\n".$el[1].' '.'['.$el[3].'] '.$el[4].' '.$el[7].' SL: '.$el[8].' -> '.calculateResult($el[4], $el[7], $el[8]);
+	}
+	foreach($linesReversed as $e) {
+		$el = explode("	", $e);
+		$newInputData .= "\n".$el[0].' '.$el[1].' 1 '.calculateResult($el[4], $el[7], $el[8]);
+	}
+	$data['list'] .= $newInputData;
+	$data['details'] .= $newDataDetails;
+	return $data;
 }
 
 function formatData($inputData, $messages, $type) {
@@ -243,17 +261,20 @@ function formatData($inputData, $messages, $type) {
 	return prepareJs($type, $formatedData['jsData'], $messages).$htmlCode.prepareDescription($formatedData).parseWeeklySummary($formatedData['weeklySummary']);
 }
 
-function weeklyReport($inputData, $weekNumber) {
-	echo $weekNumber.'<br />';
+function weeklyReport($inputData) {
 	$lines = explode("\n", $inputData);
+	$prevWeekNumber = 0;
 	foreach($lines as $e) {
 		$el = explode(" ", $e);
-		if ($el[0] == $weekNumber) {
-			echo $el[1].' '.$el[2].' '.$el[3].' '.$el[4].' '.$el[5].' '.$el[6].' '.$el[7].' '.$el[8];
-			echo '<br />';
+		if ($el[0] !== $prevWeekNumber) {
+			echo $el[0].'<br />';
 		}
+		echo $el[1].' '.$el[2].' '.$el[3].' '.$el[4].' '.$el[5].' '.$el[6].' '.$el[7].' '.$el[8];
+		echo '<br />';
+		$prevWeekNumber = $el[0];
 	}
 }
+
 ?>
 <html>
 <head>
@@ -277,19 +298,18 @@ function weeklyReport($inputData, $weekNumber) {
 </head>
 <body>
 
+	<?php
+		$data = processRawData($data);
+	?>
+
 	<?php for ($i = 1; $i <= 3; $i++) {
-		echo formatData($data, $messages, $i);
+		echo formatData($data['list'], $messages, $i);
 	} ?>
 
 	<h1>Weekly report</h1>
 
 	<?php
-		weeklyReport($dataDetails, 27);
-		weeklyReport($dataDetails, 28);
-		weeklyReport($dataDetails, 29);
-		weeklyReport($dataDetails, 30);
-		weeklyReport($dataDetails, 31);
-		weeklyReport($dataDetails, 32);
+		weeklyReport($data['details']);
 	?>
 
 </body>
